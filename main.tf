@@ -1,15 +1,15 @@
 module "jenkins" {
   source  = "terraform-aws-modules/ec2-instance/aws"
 
-  name = "jenkins-master"
+  name = "jenkins"
 
   instance_type          = "t3.small"
-  vpc_security_group_ids = ["sg-043967c027fdcfddb"] #replace your SG
-  subnet_id = "subnet-05adc3556c09f9863" #replace your Subnet
+  vpc_security_group_ids = ["sg-087f3838223040db0"] #replace your SG
+  subnet_id = "subnet-0f56388cad5462a78" #replace your Subnet
   ami = data.aws_ami.ami_info.id
   user_data = file("jenkins.sh")
   tags = {
-    Name = "jenkins-master"
+    Name = "jenkins"
   }
 
   # Define the root volume size and type
@@ -28,8 +28,8 @@ module "jenkins_agent" {
   name = "jenkins-agent"
 
   instance_type          = "t3.small"
-  vpc_security_group_ids = ["sg-043967c027fdcfddb"]
-  subnet_id = "subnet-05adc3556c09f9863"
+  vpc_security_group_ids = ["sg-087f3838223040db0"]
+  subnet_id = "subnet-0f56388cad5462a78"
   ami = data.aws_ami.ami_info.id
   user_data = file("jenkins-agent.sh")
   tags = {
@@ -53,7 +53,7 @@ module "records" {
 
   records = [
     {
-      name    = "jenkins-master"
+      name    = "jenkins"
       type    = "A"
       ttl     = 1
       records = [
