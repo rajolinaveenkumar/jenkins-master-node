@@ -1,27 +1,22 @@
-module "jenkins" {
-  source  = "terraform-aws-modules/ec2-instance/aws"
-
-  name = "jenkins"
-
+resource "aws_instance" "jenkins_master" {
   instance_type          = "t3.small"
-  vpc_security_group_ids = ["sg-087f3838223040db0"] #replace your SG
-  subnet_id = "subnet-0f56388cad5462a78" #replace your Subnet
+  vpc_security_group_ids = ["sg-087f3838223040db0"]
+  subnet_id = "subnet-0f56388cad5462a78"
   ami = data.aws_ami.ami_info.id
   user_data = file("jenkins.sh")
-  tags = {
-    Name = "jenkins"
-  }
 
-  # Define the root volume size and type
-  root_block_device = {
-      volume_size = 50       # Size of the root volume in GB
-      volume_type = "gp3"    # General Purpose SSD (you can change it if needed)
-      delete_on_termination = true  # Automatically delete the volume when the instance is terminated
+  # 20GB is not enough
+  root_block_device {
+    volume_size = 50       # Size of the root volume in GB
+    volume_type = "gp3"    # General Purpose SSD (you can change it if needed)
+    delete_on_termination = true  # Automatically delete the volume when the instance is terminated
+  }  
+  tags = {
+    Name    = "jenkins"
   }
-  
 }
 
-resource "aws_instance" "this" {
+resource "aws_instance" "jenkins_node" {
   instance_type          = "t3.small"
   vpc_security_group_ids = ["sg-087f3838223040db0"]
   subnet_id = "subnet-0f56388cad5462a78"
@@ -51,7 +46,7 @@ module "records" {
       type    = "A"
       ttl     = 1
       records = [
-        module.jenkins.public_ip
+        aws_instance.jenkins_master.public_ip
       ]
       allow_overwrite = true
     },
@@ -60,7 +55,7 @@ module "records" {
       type    = "A"
       ttl     = 1
       records = [
-        aws_instance.this.private_ip
+        aws_instance.jenkins_node.private_ip
       ]
       allow_overwrite = true
     }
