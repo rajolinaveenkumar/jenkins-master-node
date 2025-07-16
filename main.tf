@@ -13,36 +13,30 @@ module "jenkins" {
   }
 
   # Define the root volume size and type
-  root_block_device = [
-    {
+  root_block_device = {
       volume_size = 50       # Size of the root volume in GB
       volume_type = "gp3"    # General Purpose SSD (you can change it if needed)
       delete_on_termination = true  # Automatically delete the volume when the instance is terminated
-    }
-  ]
+  }
+  
 }
 
-module "jenkins_agent" {
-  source  = "terraform-aws-modules/ec2-instance/aws"
-
-  name = "jenkins-agent"
-
+resource "aws_instance" "this" {
   instance_type          = "t3.small"
   vpc_security_group_ids = ["sg-087f3838223040db0"]
   subnet_id = "subnet-0f56388cad5462a78"
   ami = data.aws_ami.ami_info.id
   user_data = file("jenkins-agent.sh")
-  tags = {
-    Name = "jenkins-agent"
-  }
 
-  root_block_device = [
-    {
-      volume_size = 50       # Size of the root volume in GB
-      volume_type = "gp3"    # General Purpose SSD (you can change it if needed)
-      delete_on_termination = true  # Automatically delete the volume when the instance is terminated
-    }
-  ]
+  # 20GB is not enough
+  root_block_device {
+    volume_size = 50       # Size of the root volume in GB
+    volume_type = "gp3"    # General Purpose SSD (you can change it if needed)
+    delete_on_termination = true  # Automatically delete the volume when the instance is terminated
+  }  
+  tags = {
+    Name    = "jenkins-agent"
+  }
 }
 
 module "records" {
@@ -66,7 +60,7 @@ module "records" {
       type    = "A"
       ttl     = 1
       records = [
-        module.jenkins_agent.private_ip
+        aws_instance.this.private_ip
       ]
       allow_overwrite = true
     }
